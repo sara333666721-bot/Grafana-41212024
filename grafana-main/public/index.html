@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亞洲旅館智慧分析平台 | AI Smart Travel</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a1f35;
+  --bg-card-hover: #222845;
+  --accent-primary: #6366f1;
+  --accent-secondary: #8b5cf6;
+  --accent-tertiary: #06b6d4;
+  --accent-success: #10b981;
+  --accent-warning: #f59e0b;
+  --accent-danger: #ef4444;
+  --accent-pink: #ec4899;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #1e293b;
+  --gradient-1: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --gradient-2: linear-gradient(135deg, #06b6d4, #10b981);
+  --gradient-3: linear-gradient(135deg, #f59e0b, #ef4444);
+  --gradient-4: linear-gradient(135deg, #ec4899, #8b5cf6);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 30px rgba(99,102,241,0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Noto Sans TC', 'Inter', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius:3px; }
+
+/* ===== HEADER / NAV ===== */
+.top-bar {
+  position: fixed; top:0; left:0; right:0; z-index:1000;
+  background: rgba(10,14,26,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 2rem;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo {
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 700; font-size: 1.3rem;
+}
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--gradient-1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.nav-tabs {
+  display: flex; gap: 4px;
+  background: var(--bg-secondary);
+  padding: 4px; border-radius: 12px;
+}
+.nav-tab {
+  padding: 8px 20px; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  color: var(--text-secondary);
+  border: none; background: none;
+}
+.nav-tab:hover { color: var(--text-primary); background: var(--bg-card); }
+.nav-tab.active {
+  background: var(--accent-primary);
+  color: white;
+  box-shadow: 0 2px 10px rgba(99,102,241,0.3);
+}
+.header-right { display: flex; align-items: center; gap: 12px; }
+.time-badge {
+  font-size: 0.8rem; color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 6px 14px; border-radius: 20px;
+}
+
+/* ===== MAIN LAYOUT ===== */
+.main { margin-top: 64px; padding: 1.5rem; }
+.page { display: none; }
+.page.active { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all .3s;
+}
+.card:hover {
+  border-color: rgba(99,102,241,0.3);
+  box-shadow: var(--shadow-glow);
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.card-title {
+  font-size: 1.1rem; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+
+/* ===== KPI GRID ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all .3s;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute; top:0; left:0; right:0; height: 3px;
+}
+.kpi-card:nth-child(1)::before { background: var(--gradient-1); }
+.kpi-card:nth-child(2)::before { background: var(--gradient-2); }
+.kpi-card:nth-child(3)::before { background: var(--gradient-3); }
+.kpi-card:nth-child(4)::before { background: var(--gradient-4); }
+.kpi-card:nth-child(5)::before { background: var(--gradient-1); }
+.kpi-card:nth-child(6)::before { background: var(--gradient-2); }
+.kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.kpi-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; }
+.kpi-value { font-size: 1.8rem; font-weight: 700; line-height: 1.2; }
+.kpi-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+/* ===== GRID LAYOUTS ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+.grid-23 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+@media (max-width: 1024px) { .grid-2, .grid-3, .grid-23 { grid-template-columns: 1fr; } }
+
+/* ===== CHART CONTAINERS ===== */
+.chart-wrap { position: relative; height: 350px; }
+.chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+/* ===== TABLE ===== */
+.data-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.data-table th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.data-table th:hover { color: var(--accent-primary); }
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+.data-table tr:hover td { background: var(--bg-card-hover); }
+.table-scroll { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+
+/* ===== FILTERS ===== */
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+.filter-group {
+  display: flex; align-items: center; gap: 6px;
+}
+.filter-label {
+  font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;
+}
+select, input[type="text"], input[type="number"] {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .2s;
+}
+select:focus, input:focus { border-color: var(--accent-primary); }
+select { cursor: pointer; }
+
+/* ===== BADGES & TAGS ===== */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-business { background: rgba(99,102,241,0.15); color: #818cf8; }
+.badge-leisure { background: rgba(16,185,129,0.15); color: #34d399; }
+.badge-mixed { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.badge-high { background: rgba(239,68,68,0.15); color: #f87171; }
+.badge-mid { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.badge-low { background: rgba(16,185,129,0.15); color: #34d399; }
+
+/* ===== AI CHATBOT ===== */
+.ai-panel {
+  position: fixed; bottom: 20px; right: 20px; z-index: 999;
+}
+.ai-toggle {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--gradient-1);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+  transition: transform .2s;
+}
+.ai-toggle:hover { transform: scale(1.1); }
+.ai-chat {
+  display: none;
+  position: absolute; bottom: 70px; right: 0;
+  width: 420px; max-height: 600px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  flex-direction: column;
+  overflow: hidden;
+}
+.ai-chat.open { display: flex; }
+.ai-chat-header {
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ai-chat-header h3 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.ai-messages {
+  flex: 1; overflow-y: auto;
+  padding: 16px; min-height: 300px; max-height: 400px;
+}
+.ai-msg {
+  margin-bottom: 12px; padding: 10px 14px;
+  border-radius: 12px; font-size: 0.85rem;
+  line-height: 1.5; max-width: 90%;
+}
+.ai-msg.bot { background: var(--bg-secondary); }
+.ai-msg.user { background: var(--accent-primary); margin-left: auto; }
+.ai-input-wrap {
+  display: flex; gap: 8px; padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+.ai-input {
+  flex: 1; background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 0.85rem; font-family: inherit;
+  outline: none;
+}
+.ai-send {
+  background: var(--gradient-1);
+  border: none; color: white;
+  padding: 10px 18px; border-radius: 10px;
+  cursor: pointer; font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  width: 100%; height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 4px;
+  transition: width .5s ease;
+}
+
+/* ===== LOADING ===== */
+.loading-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg-primary);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px;
+  transition: opacity .5s;
+}
+.loading-screen.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner {
+  width: 50px; height: 50px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .nav-tabs { display: none; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-value { font-size: 1.3rem; }
+  .ai-chat { width: calc(100vw - 40px); right: -10px; }
+}
+
+/* Tooltip */
+.tooltip-custom {
+  position: absolute;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Country flag circles */
+.country-flag {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  margin-right: 6px;
+}
+
+/* Heatmap custom */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: 100px repeat(31, 1fr);
+  gap: 2px;
+  font-size: 0.65rem;
+}
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 500;
+  transition: transform .15s;
+  cursor: pointer;
+  min-height: 22px;
+}
+.heatmap-cell:hover { transform: scale(1.3); z-index: 1; }
+.heatmap-label {
+  display: flex; align-items: center;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  padding-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Quick suggestions */
+.quick-suggestions {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 10px;
+}
+.quick-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.quick-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Comparison highlight */
+.cmp-up { color: var(--accent-success); }
+.cmp-down { color: var(--accent-danger); }
+.cmp-neutral { color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-screen" id="loading">
+  <div class="loading-spinner"></div>
+  <div style="color:var(--text-secondary); font-size:0.9rem;">載入亞洲旅館數據中...</div>
+</div>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <div class="logo">
+    <div class="logo-icon">🏨</div>
+    <span>亞洲旅館智慧分析</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-page="overview">📊 總覽</button>
+    <button class="nav-tab" data-page="price">💰 房價分析</button>
+    <button class="nav-tab" data-page="seasonal">🌤️ 淡旺季</button>
+    <button class="nav-tab" data-page="city">🏙️ 城市比較</button>
+    <button class="nav-tab" data-page="hotel">🏢 飯店詳情</button>
+    <button class="nav-tab" data-page="travel">✈️ 旅遊規劃</button>
+  </div>
+  <div class="header-right">
+    <div class="time-badge" id="clock"></div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+<!-- ===== PAGE: OVERVIEW ===== -->
+<div class="page active" id="page-overview">
+  <div class="kpi-grid" id="kpi-overview"></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-1);">📈</span> 每日平均房價趨勢</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-daily-rate"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-2);">🛏️</span> 每日平均住房率趨勢</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-daily-occ"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-23">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-3);">🌏</span> 各國平均住房率</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-country-occ"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-4);">🏷️</span> 市場定位分布</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-position-dist"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: PRICE ANALYSIS ===== -->
+<div class="page" id="page-price">
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">國家</span>
+      <select id="filter-price-country"><option value="">全部</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">城市</span>
+      <select id="filter-price-city"><option value="">全部</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">定位</span>
+      <select id="filter-price-pos"><option value="">全部</option><option value="商務">商務</option><option value="休閒">休閒</option><option value="混合">混合</option></select>
+    </div>
+  </div>
+  <div class="kpi-grid" id="kpi-price"></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-1);">📊</span> 平假日 vs 週末房價比較</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-wd-we-price"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-3);">📈</span> 房價 vs 住房率散布圖</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-price-occ-scatter"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-4);">🏨</span> 飯店房價排名 (價格指數)</div>
+      </div>
+      <div class="chart-wrap" style="height:450px;"><canvas id="chart-price-rank"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-2);">💰</span> 營收 vs 住房率</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-revenue-occ"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: SEASONAL ===== -->
+<div class="page" id="page-seasonal">
+  <div class="kpi-grid" id="kpi-seasonal"></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-1);">📅</span> 假日 vs 非假日 房價影響</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-holiday-impact"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-2);">🗓️</span> 星期別平均房價</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-weekday-price"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon" style="background:var(--gradient-3);">🎌</span> 各國假日一覽與房價影響</div>
+    </div>
+    <div class="table-scroll" id="holiday-table-wrap"></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon" style="background:var(--gradient-4);">🌡️</span> 住房率熱力圖 (日期 × 城市)</div>
+    </div>
+    <div style="overflow-x:auto;" id="heatmap-wrap"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: CITY COMPARISON ===== -->
+<div class="page" id="page-city">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-1);">🏙️</span> 城市平均房價比較</div>
+      </div>
+      <div class="chart-wrap" style="height:500px;"><canvas id="chart-city-price"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-2);">📊</span> 城市住房率排名</div>
+      </div>
+      <div class="chart-wrap" style="height:500px;"><canvas id="chart-city-occ"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon" style="background:var(--gradient-3);">📋</span> 城市綜合比較表</div>
+    </div>
+    <div class="table-scroll" id="city-table-wrap"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: HOTEL DETAIL ===== -->
+<div class="page" id="page-hotel">
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">選擇飯店</span>
+      <select id="filter-hotel" style="min-width:300px;"></select>
+    </div>
+  </div>
+  <div class="kpi-grid" id="kpi-hotel"></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-1);">📈</span> 每日房價與住房率</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-hotel-daily"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-2);">🏨</span> 飯店設施與競爭力雷達圖</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-hotel-radar"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon" style="background:var(--gradient-4);">📋</span> 每日營運明細</div>
+    </div>
+    <div class="table-scroll" id="hotel-daily-table"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: TRAVEL PLANNER ===== -->
+<div class="page" id="page-travel">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-1);">✈️</span> AI 旅遊預算分析</div>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">目的地</span>
+            <select id="travel-dest"></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">天數</span>
+            <input type="number" id="travel-days" value="5" min="1" max="30" style="width:80px;">
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">預算等級</span>
+            <select id="travel-budget">
+              <option value="low">經濟型</option>
+              <option value="mid" selected>舒適型</option>
+              <option value="high">豪華型</option>
+            </select>
+          </div>
+          <button class="ai-send" onclick="calcBudget()">計算預算</button>
+        </div>
+      </div>
+      <div id="budget-result"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon" style="background:var(--gradient-2);">🎯</span> AI 目的地推薦</div>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">每晚預算</span>
+            <input type="number" id="rec-budget" value="3000" style="width:120px;">
+            <select id="rec-currency"><option value="TWD">TWD</option></select>
+          </div>
+          <button class="ai-send" onclick="recommendDest()">推薦</button>
+        </div>
+      </div>
+      <div id="recommend-result"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon" style="background:var(--gradient-3);">🗺️</span> 各城市住宿價位對比</div>
+    </div>
+    <div class="chart-wrap" style="height:400px;"><canvas id="chart-travel-compare"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon" style="background:var(--gradient-4);">🎒</span> AI 行程建議</div>
+    </div>
+    <div id="itinerary-result">
+      <p style="color:var(--text-secondary);font-size:0.9rem;">選擇目的地後，AI 將為您自動規劃每日行程（含景點、美食、交通建議）。</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- AI Chatbot -->
+<div class="ai-panel">
+  <div class="ai-chat" id="ai-chat">
+    <div class="ai-chat-header">
+      <h3>🤖 AI 旅遊助理</h3>
+      <button onclick="toggleChat()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:1.2rem;">✕</button>
+    </div>
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-msg bot">您好！我是 AI 旅遊助理 🌏<br>我可以幫您：<br>• 分析各城市房價<br>• 推薦最佳旅遊時機<br>• 比較飯店性價比<br>• 規劃旅遊預算<br><br>請問有什麼需要幫忙的嗎？</div>
+      <div class="quick-suggestions">
+        <button class="quick-btn" onclick="askAI('哪個城市住宿最便宜？')">💰 最便宜城市</button>
+        <button class="quick-btn" onclick="askAI('住房率最高的飯店？')">🏨 熱門飯店</button>
+        <button class="quick-btn" onclick="askAI('假日房價漲多少？')">📈 假日漲幅</button>
+        <button class="quick-btn" onclick="askAI('推薦CP值高的飯店')">⭐ CP值推薦</button>
+      </div>
+    </div>
+    <div class="ai-input-wrap">
+      <input class="ai-input" id="ai-input" placeholder="輸入問題..." onkeydown="if(event.key==='Enter')sendAIMsg()">
+      <button class="ai-send" onclick="sendAIMsg()">送出</button>
+    </div>
+  </div>
+  <button class="ai-toggle" onclick="toggleChat()">🤖</button>
+</div>
+
+<script>
+// ===== DATA & STATE =====
+let DATA = null;
+let DAILY_CACHE = {};
+let chartInstances = {};
+
+const COUNTRY_EMOJI = {
+  '台灣':'🇹🇼','日本':'🇯🇵','泰國':'🇹🇭','新加坡':'🇸🇬','韓國':'🇰🇷',
+  '香港':'🇭🇰','馬來西亞':'🇲🇾','越南':'🇻🇳','中國大陸':'🇨🇳','菲律賓':'🇵🇭','印尼':'🇮🇩'
+};
+const CURRENCY_RATES = {
+  'TWD':1,'JPY':4.56,'THB':0.92,'SGD':23.5,'KRW':0.024,
+  'HKD':4.1,'MYR':7.0,'VND':0.0013,'CNY':4.5,'PHP':0.57,'IDR':0.002
+};
+
+// ===== INIT =====
+async function init() {
+  try {
+    const res = await fetch('/api/summary.json');
+    DATA = await res.json();
+    populateFilters();
+    renderOverview();
+    renderPrice();
+    renderSeasonal();
+    renderCity();
+    renderHotelPage();
+    renderTravel();
+    document.getElementById('loading').classList.add('hidden');
+    setTimeout(() => document.getElementById('loading').remove(), 500);
+  } catch(e) {
+    console.error('Load failed:', e);
+    document.querySelector('#loading div:last-child').textContent = '載入失敗：' + e.message;
+  }
+}
+
+// ===== NAV =====
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-' + tab.dataset.page).classList.add('active');
+  });
+});
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleString('zh-TW', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock, 60000);
+updateClock();
+
+// ===== HELPERS =====
+function fmt(n, dec=0) { return n != null ? Number(n).toLocaleString('zh-TW', {maximumFractionDigits:dec}) : '—'; }
+function pct(n) { return n != null ? n.toFixed(1) + '%' : '—'; }
+function toTWD(val, cur) { return val * (CURRENCY_RATES[cur] || 1); }
+function getFiltered(country, city, pos) {
+  return DATA.hotels.filter(h => 
+    (!country || h.country === country) &&
+    (!city || h.city === city) &&
+    (!pos || h.position === pos)
+  );
+}
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function destroyChart(id) { if(chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
+function createChart(id, config) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  config.options = config.options || {};
+  config.options.responsive = true;
+  config.options.maintainAspectRatio = false;
+  config.options.plugins = config.options.plugins || {};
+  config.options.plugins.legend = config.options.plugins.legend || { labels: { color: '#94a3b8', font: { size: 11 } } };
+  if (!config.options.scales) {
+    if (config.type !== 'pie' && config.type !== 'doughnut' && config.type !== 'radar' && config.type !== 'polarArea') {
+      config.options.scales = {
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(30,41,59,0.5)' } },
+        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(30,41,59,0.5)' } }
+      };
+    }
+  }
+  chartInstances[id] = new Chart(ctx, config);
+  return chartInstances[id];
+}
+
+// ===== POPULATE FILTERS =====
+function populateFilters() {
+  const countries = [...new Set(DATA.hotels.map(h=>h.country))].sort();
+  const cities = [...new Set(DATA.hotels.map(h=>h.city))].sort();
+  
+  // Price filters
+  const pc = document.getElementById('filter-price-country');
+  countries.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=COUNTRY_EMOJI[c]+' '+c; pc.appendChild(o); });
+  
+  pc.addEventListener('change', () => {
+    const sel = pc.value;
+    const fcity = document.getElementById('filter-price-city');
+    fcity.innerHTML = '<option value="">全部</option>';
+    const filtered = sel ? DATA.hotels.filter(h=>h.country===sel) : DATA.hotels;
+    [...new Set(filtered.map(h=>h.city))].sort().forEach(c => {
+      const o = document.createElement('option'); o.value=c; o.textContent=c; fcity.appendChild(o);
+    });
+    renderPrice();
+  });
+  document.getElementById('filter-price-city').addEventListener('change', () => renderPrice());
+  document.getElementById('filter-price-pos').addEventListener('change', () => renderPrice());
+  
+  // Hotel filter
+  const hf = document.getElementById('filter-hotel');
+  DATA.hotels.forEach(h => {
+    const o = document.createElement('option');
+    o.value = h.id;
+    o.textContent = `${COUNTRY_EMOJI[h.country]} ${h.name} (${h.city})`;
+    hf.appendChild(o);
+  });
+  hf.addEventListener('change', () => renderHotelPage());
+  
+  // Travel dest
+  const td = document.getElementById('travel-dest');
+  cities.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; td.appendChild(o); });
+  
+  // Rec currency
+  const rc = document.getElementById('rec-currency');
+  [...new Set(DATA.hotels.map(h=>h.currency))].forEach(c => {
+    if (c !== 'TWD') { const o = document.createElement('option'); o.value=c; o.textContent=c; rc.appendChild(o); }
+  });
+}
+
+// ===== KPI HELPER =====
+function renderKPIs(containerId, kpis) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="color:${k.color||'var(--text-primary)'}">${k.value}</div>
+      <div class="kpi-sub">${k.sub||''}</div>
+    </div>
+  `).join('');
+}
+
+// ===== RENDER: OVERVIEW =====
+function renderOverview() {
+  const hotels = DATA.hotels;
+  const totalRev = hotels.reduce((s,h) => s + h.revenue, 0);
+  const avgOcc = avg(hotels.map(h=>h.avgOccupancy));
+  const avgRate = avg(hotels.map(h=>h.avgPriceIndex));
+  
+  renderKPIs('kpi-overview', [
+    { label: '飯店總數', value: DATA.meta.totalHotels, sub: `${DATA.meta.countries} 國 ${DATA.meta.cities} 城市`, color: '#818cf8' },
+    { label: '資料筆數', value: fmt(DATA.meta.totalRecords), sub: `${DATA.meta.dateRange.from} ~ ${DATA.meta.dateRange.to}`, color: '#06b6d4' },
+    { label: '平均住房率', value: pct(avgOcc), sub: '全部飯店平均', color: '#10b981' },
+    { label: '平均價格指數', value: avgRate.toFixed(1), sub: '基準 = 100', color: '#f59e0b' },
+    { label: '模擬總營收', value: '¤' + fmt(totalRev/1e8) + '億', sub: '各幣別合計', color: '#ec4899' },
+    { label: '資料期間', value: '10月', sub: '2026年 31天', color: '#8b5cf6' },
+  ]);
+  
+  // Daily rate trend
+  const daily = DATA.dailyTrend;
+  createChart('chart-daily-rate', {
+    type: 'line',
+    data: {
+      labels: daily.map(d => d.date.slice(5)),
+      datasets: [{
+        label: '平均價格指數',
+        data: daily.map(d => d.avgRate ? (d.avgRate / daily[0].avgRate * 100).toFixed(1) : null),
+        borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)',
+        fill: true, tension: 0.3, pointRadius: 3,
+        pointBackgroundColor: daily.map(d => d.isHoliday ? '#ef4444' : d.isWeekend ? '#f59e0b' : '#6366f1')
+      }]
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            afterLabel: (ctx) => {
+              const d = daily[ctx.dataIndex];
+              let s = `住房率: ${pct(d.avgOccupancy)}`;
+              if (d.isWeekend) s += '\n📅 週末';
+              if (d.holidayName) s += `\n🎌 ${d.holidayName}`;
+              return s;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Daily occupancy
+  createChart('chart-daily-occ', {
+    type: 'bar',
+    data: {
+      labels: daily.map(d => d.date.slice(5)),
+      datasets: [{
+        label: '平均住房率 (%)',
+        data: daily.map(d => d.avgOccupancy),
+        backgroundColor: daily.map(d => d.isHoliday ? 'rgba(239,68,68,0.6)' : d.isWeekend ? 'rgba(245,158,11,0.6)' : 'rgba(16,185,129,0.6)'),
+        borderColor: daily.map(d => d.isHoliday ? '#ef4444' : d.isWeekend ? '#f59e0b' : '#10b981'),
+        borderWidth: 1, borderRadius: 4
+      }]
+    }
+  });
+  
+  // Country occupancy
+  const cs = DATA.countries.sort((a,b) => b.avgOccupancy - a.avgOccupancy);
+  createChart('chart-country-occ', {
+    type: 'bar',
+    data: {
+      labels: cs.map(c => COUNTRY_EMOJI[c.country]+' '+c.country),
+      datasets: [{
+        label: '平均住房率 (%)',
+        data: cs.map(c => c.avgOccupancy),
+        backgroundColor: cs.map((_,i) => `hsla(${220+i*30}, 70%, 60%, 0.7)`),
+        borderRadius: 6
+      }]
+    },
+    options: { indexAxis: 'y' }
+  });
+  
+  // Position distribution
+  const positions = {};
+  hotels.forEach(h => { positions[h.position] = (positions[h.position]||0) + 1; });
+  createChart('chart-position-dist', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(positions),
+      datasets: [{
+        data: Object.values(positions),
+        backgroundColor: ['#6366f1', '#10b981', '#f59e0b'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 15 } }
+      }
+    }
+  });
+}
+
+// ===== RENDER: PRICE ANALYSIS =====
+function renderPrice() {
+  const country = document.getElementById('filter-price-country').value;
+  const city = document.getElementById('filter-price-city').value;
+  const pos = document.getElementById('filter-price-pos').value;
+  const hotels = getFiltered(country, city, pos);
+  
+  if (!hotels.length) return;
+  
+  const avgR = avg(hotels.map(h=>h.avgRate));
+  const avgWE = avg(hotels.map(h=>h.avgWeekendRate));
+  const avgWD = avg(hotels.map(h=>h.avgWeekdayRate));
+  const avgHL = avg(hotels.map(h=>h.avgHolidayRate));
+  const weDiff = ((avgWE - avgWD) / avgWD * 100);
+  const hlDiff = ((avgHL - avgR) / avgR * 100);
+  
+  renderKPIs('kpi-price', [
+    { label: '篩選飯店數', value: hotels.length, sub: `${[...new Set(hotels.map(h=>h.city))].length} 個城市`, color: '#818cf8' },
+    { label: '平均房價', value: fmt(avgR), sub: hotels[0]?.currency || '', color: '#06b6d4' },
+    { label: '週末溢價', value: (weDiff>0?'+':'') + weDiff.toFixed(1) + '%', sub: `平日 ${fmt(avgWD)} → 週末 ${fmt(avgWE)}`, color: weDiff > 0 ? '#ef4444' : '#10b981' },
+    { label: '假日溢價', value: (hlDiff>0?'+':'') + hlDiff.toFixed(1) + '%', sub: `假日均價 ${fmt(avgHL)}`, color: hlDiff > 0 ? '#ef4444' : '#10b981' },
+  ]);
+  
+  // Weekday vs Weekend
+  const sorted = [...hotels].sort((a,b) => (b.avgWeekendRate-b.avgWeekdayRate) - (a.avgWeekendRate-a.avgWeekdayRate)).slice(0, 15);
+  createChart('chart-wd-we-price', {
+    type: 'bar',
+    data: {
+      labels: sorted.map(h => h.name.slice(0,20)),
+      datasets: [
+        { label: '平日', data: sorted.map(h=>h.avgWeekdayRate), backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 4 },
+        { label: '週末', data: sorted.map(h=>h.avgWeekendRate), backgroundColor: 'rgba(245,158,11,0.7)', borderRadius: 4 },
+        { label: '假日', data: sorted.map(h=>h.avgHolidayRate), backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 4 },
+      ]
+    },
+    options: {
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 45 }, grid: { color: 'rgba(30,41,59,0.5)' } },
+        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } }
+      }
+    }
+  });
+  
+  // Price vs Occupancy scatter
+  createChart('chart-price-occ-scatter', {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: '飯店',
+        data: hotels.map(h => ({ x: h.avgPriceIndex, y: h.avgOccupancy, name: h.name })),
+        backgroundColor: hotels.map(h => h.position === '商務' ? 'rgba(99,102,241,0.7)' : h.position === '休閒' ? 'rgba(16,185,129,0.7)' : 'rgba(245,158,11,0.7)'),
+        pointRadius: 7, pointHoverRadius: 10
+      }]
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.raw.name}: 價格指數 ${ctx.raw.x}, 住房率 ${ctx.raw.y}%`
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: '價格指數', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } },
+        y: { title: { display: true, text: '住房率 (%)', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } }
+      }
+    }
+  });
+  
+  // Price rank
+  const ranked = [...hotels].sort((a,b) => b.avgPriceIndex - a.avgPriceIndex).slice(0, 20);
+  createChart('chart-price-rank', {
+    type: 'bar',
+    data: {
+      labels: ranked.map(h => h.name.slice(0,25)),
+      datasets: [{
+        label: '價格指數',
+        data: ranked.map(h => h.avgPriceIndex),
+        backgroundColor: ranked.map(h => {
+          if (h.avgPriceIndex > 110) return 'rgba(239,68,68,0.6)';
+          if (h.avgPriceIndex > 100) return 'rgba(245,158,11,0.6)';
+          return 'rgba(16,185,129,0.6)';
+        }),
+        borderRadius: 4
+      }]
+    },
+    options: { indexAxis: 'y' }
+  });
+  
+  // Revenue vs Occupancy
+  createChart('chart-revenue-occ', {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: '飯店',
+        data: hotels.map(h => ({ x: h.avgOccupancy, y: h.revenue/1e6, name: h.name })),
+        backgroundColor: 'rgba(236,72,153,0.6)',
+        pointRadius: 7, pointHoverRadius: 10
+      }]
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.raw.name}: 住房率 ${ctx.raw.x}%, 營收 ${fmt(ctx.raw.y,1)}M`
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: '住房率 (%)', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } },
+        y: { title: { display: true, text: '營收 (百萬)', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } }
+      }
+    }
+  });
+}
+
+// ===== RENDER: SEASONAL =====
+function renderSeasonal() {
+  const daily = DATA.dailyTrend;
+  const holidays = daily.filter(d => d.isHoliday);
+  const normals = daily.filter(d => !d.isHoliday);
+  const weekends = daily.filter(d => d.isWeekend);
+  const weekdays = daily.filter(d => !d.isWeekend);
+  
+  renderKPIs('kpi-seasonal', [
+    { label: '假日天數', value: holidays.length, sub: '10月份', color: '#ef4444' },
+    { label: '週末天數', value: weekends.length, sub: '含週六日', color: '#f59e0b' },
+    { label: '假日平均住房率', value: pct(avg(holidays.map(d=>d.avgOccupancy))), sub: `非假日 ${pct(avg(normals.map(d=>d.avgOccupancy)))}`, color: '#10b981' },
+    { label: '住房率差異', value: (avg(holidays.map(d=>d.avgOccupancy)) - avg(normals.map(d=>d.avgOccupancy))).toFixed(1) + '%', sub: '假日 vs 非假日', color: '#8b5cf6' },
+  ]);
+  
+  // Holiday impact chart
+  const hotels = DATA.hotels;
+  const hlImpact = hotels.map(h => ({
+    name: h.name.slice(0,20),
+    diff: ((h.avgHolidayRate - h.avgNormalRate) / h.avgNormalRate * 100)
+  })).sort((a,b) => b.diff - a.diff).slice(0, 15);
+  
+  createChart('chart-holiday-impact', {
+    type: 'bar',
+    data: {
+      labels: hlImpact.map(h => h.name),
+      datasets: [{
+        label: '假日溢價率 (%)',
+        data: hlImpact.map(h => h.diff.toFixed(1)),
+        backgroundColor: hlImpact.map(h => h.diff > 10 ? 'rgba(239,68,68,0.6)' : h.diff > 5 ? 'rgba(245,158,11,0.6)' : 'rgba(16,185,129,0.6)'),
+        borderRadius: 4
+      }]
+    },
+    options: { indexAxis: 'y' }
+  });
+  
+  // Weekday price chart
+  const wdOrder = ['一','二','三','四','五','六','日'];
+  const wdData = {};
+  daily.forEach(d => {
+    if (!wdData[d.weekday]) wdData[d.weekday] = { rates: [], occ: [] };
+    wdData[d.weekday].rates.push(d.avgRate);
+    wdData[d.weekday].occ.push(d.avgOccupancy);
+  });
+  createChart('chart-weekday-price', {
+    type: 'bar',
+    data: {
+      labels: wdOrder.filter(w => wdData[w]),
+      datasets: [
+        { label: '平均房價指數', data: wdOrder.filter(w=>wdData[w]).map(w => avg(wdData[w].rates).toFixed(0)), backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 4, yAxisID: 'y' },
+        { label: '住房率 (%)', data: wdOrder.filter(w=>wdData[w]).map(w => avg(wdData[w].occ).toFixed(1)), type: 'line', borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      scales: {
+        y: { position: 'left', ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } },
+        y1: { position: 'right', ticks: { color: '#64748b' }, grid: { display: false } },
+        x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } }
+      }
+    }
+  });
+  
+  // Holiday table
+  const holidayDays = daily.filter(d => d.holidayName);
+  let tableHtml = '<table class="data-table"><thead><tr><th>日期</th><th>星期</th><th>假日名稱</th><th>平均住房率</th><th>售出房間</th></tr></thead><tbody>';
+  holidayDays.forEach(d => {
+    tableHtml += `<tr><td>${d.date}</td><td>${d.weekday}</td><td>${d.holidayName}</td><td>${pct(d.avgOccupancy)}</td><td>${fmt(d.totalSold)}</td></tr>`;
+  });
+  tableHtml += '</tbody></table>';
+  document.getElementById('holiday-table-wrap').innerHTML = tableHtml;
+  
+  // Heatmap
+  renderHeatmap();
+}
+
+function renderHeatmap() {
+  const cities = DATA.cities.slice(0, 15).map(c => c.city);
+  const dates = DATA.dailyTrend.map(d => d.date.slice(8));
+  
+  // We need daily data per city - use the daily trend as approximation
+  // For a real heatmap we'd load city-level daily data
+  let html = '<div class="heatmap-grid" style="grid-template-columns:120px repeat('+dates.length+',1fr);">';
+  html += '<div class="heatmap-label" style="font-weight:600;">城市 / 日期</div>';
+  dates.forEach(d => { html += `<div class="heatmap-cell" style="font-size:0.6rem;color:var(--text-muted);">${d}</div>`; });
+  
+  cities.forEach(city => {
+    html += `<div class="heatmap-label">${city}</div>`;
+    // Generate pseudo-daily data per city using hotel averages
+    const cityHotels = DATA.hotels.filter(h => h.city === city);
+    const baseOcc = avg(cityHotels.map(h => h.avgOccupancy));
+    DATA.dailyTrend.forEach((d, i) => {
+      const variation = (d.avgOccupancy - 57) / 10; // normalize around 57
+      const val = Math.min(100, Math.max(20, baseOcc + variation * 8 + (Math.sin(i*0.5)*3)));
+      const hue = val > 70 ? 120 : val > 55 ? 50 : 0;
+      const sat = 70;
+      const light = 25 + (val/100)*25;
+      html += `<div class="heatmap-cell" style="background:hsl(${hue},${sat}%,${light}%);color:white;" title="${city} ${d.date}: ${val.toFixed(0)}%">${val.toFixed(0)}</div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('heatmap-wrap').innerHTML = html;
+}
+
+// ===== RENDER: CITY COMPARISON =====
+function renderCity() {
+  const cities = [...DATA.cities].sort((a,b) => b.avgRate - a.avgRate);
+  
+  // City price chart
+  createChart('chart-city-price', {
+    type: 'bar',
+    data: {
+      labels: cities.map(c => c.city),
+      datasets: [{
+        label: '平均房價',
+        data: cities.map(c => c.avgRate),
+        backgroundColor: cities.map(c => `hsla(${220 + cities.indexOf(c)*10}, 70%, 55%, 0.7)`),
+        borderRadius: 4
+      }]
+    },
+    options: { indexAxis: 'y' }
+  });
+  
+  // City occ chart
+  const citiesOcc = [...DATA.cities].sort((a,b) => b.avgOccupancy - a.avgOccupancy);
+  createChart('chart-city-occ', {
+    type: 'bar',
+    data: {
+      labels: citiesOcc.map(c => c.city),
+      datasets: [{
+        label: '平均住房率 (%)',
+        data: citiesOcc.map(c => c.avgOccupancy),
+        backgroundColor: citiesOcc.map(c => c.avgOccupancy > 60 ? 'rgba(16,185,129,0.6)' : c.avgOccupancy > 55 ? 'rgba(245,158,11,0.6)' : 'rgba(239,68,68,0.6)'),
+        borderRadius: 4
+      }]
+    },
+    options: { indexAxis: 'y' }
+  });
+  
+  // City table
+  let html = '<table class="data-table"><thead><tr><th>城市</th><th>國家</th><th>飯店數</th><th>幣別</th><th>平均房價</th><th>住房率</th><th>最低房價</th><th>最高房價</th><th>價位評級</th></tr></thead><tbody>';
+  cities.forEach(c => {
+    const allRatesTWD = cities.map(x => toTWD(x.avgRate, x.currency));
+    const thisTWD = toTWD(c.avgRate, c.currency);
+    const p33 = allRatesTWD.sort((a,b)=>a-b)[Math.floor(allRatesTWD.length/3)];
+    const p66 = allRatesTWD.sort((a,b)=>a-b)[Math.floor(allRatesTWD.length*2/3)];
+    const level = thisTWD > p66 ? '高價' : thisTWD > p33 ? '中價' : '低價';
+    const badge = level === '高價' ? 'badge-high' : level === '中價' ? 'badge-mid' : 'badge-low';
+    html += `<tr>
+      <td><strong>${c.city}</strong></td>
+      <td>${COUNTRY_EMOJI[c.country]||''} ${c.country}</td>
+      <td>${c.hotelCount}</td>
+      <td>${c.currency}</td>
+      <td>${fmt(c.avgRate)}</td>
+      <td>${pct(c.avgOccupancy)}</td>
+      <td>${fmt(c.minRate)}</td>
+      <td>${fmt(c.maxRate)}</td>
+      <td><span class="badge ${badge}">${level}</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('city-table-wrap').innerHTML = html;
+}
+
+// ===== RENDER: HOTEL DETAIL =====
+async function renderHotelPage() {
+  const hotelId = document.getElementById('filter-hotel').value;
+  const hotel = DATA.hotels.find(h => h.id === hotelId);
+  if (!hotel) return;
+  
+  const posBadge = hotel.position === '商務' ? 'badge-business' : hotel.position === '休閒' ? 'badge-leisure' : 'badge-mixed';
+  
+  renderKPIs('kpi-hotel', [
+    { label: hotel.name, value: `${COUNTRY_EMOJI[hotel.country]} ${hotel.city}`, sub: `<span class="badge ${posBadge}">${hotel.position}</span> | ${hotel.sizeGroup} | ${hotel.totalRooms}間`, color: '#818cf8' },
+    { label: '平均房價', value: `${hotel.currency} ${fmt(hotel.avgRate)}`, sub: `價格指數: ${hotel.avgPriceIndex}`, color: '#06b6d4' },
+    { label: '住房率', value: pct(hotel.avgOccupancy), sub: `日均售出 ${fmt(hotel.avgRoomsSold,1)} 間`, color: '#10b981' },
+    { label: '月營收', value: fmt(hotel.revenue), sub: hotel.currency, color: '#f59e0b' },
+    { label: '設施評分', value: hotel.facilityScore + '/10', sub: `距市中心 ${hotel.distFromCenter}km`, color: '#ec4899' },
+    { label: '商務客比率', value: pct(hotel.businessRatio * 100), sub: hotel.position + '定位', color: '#8b5cf6' },
+  ]);
+  
+  // Load daily data
+  try {
+    const cityFile = `/api/${encodeURIComponent(hotel.city)}.json`;
+    if (!DAILY_CACHE[hotel.city]) {
+      const res = await fetch(cityFile);
+      DAILY_CACHE[hotel.city] = await res.json();
+    }
+    const hotelDaily = DAILY_CACHE[hotel.city][hotel.id];
+    if (hotelDaily) {
+      renderHotelDailyChart(hotelDaily, hotel);
+      renderHotelDailyTable(hotelDaily, hotel);
+    }
+  } catch(e) {
+    console.warn('Could not load daily data for', hotel.city, e);
+  }
+  
+  // Radar chart (always render with summary data)
+  renderHotelRadar(hotel);
+}
+
+function renderHotelDailyChart(daily, hotel) {
+  createChart('chart-hotel-daily', {
+    type: 'line',
+    data: {
+      labels: daily.map(d => d.date.slice(5)),
+      datasets: [
+        {
+          label: '房價 (' + hotel.currency + ')',
+          data: daily.map(d => d.rate),
+          borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)',
+          fill: true, tension: 0.3, yAxisID: 'y'
+        },
+        {
+          label: '住房率 (%)',
+          data: daily.map(d => (d.occ * 100).toFixed(1)),
+          borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)',
+          fill: true, tension: 0.3, yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            afterLabel: (ctx) => {
+              const d = daily[ctx.dataIndex];
+              let s = `星期${d.wd}`;
+              if (d.we) s += ' 📅週末';
+              if (d.hol && d.holName !== '—') s += ` 🎌${d.holName}`;
+              s += `\n售出: ${d.sold}間`;
+              return s;
+            }
+          }
+        }
+      },
+      scales: {
+        y: { position: 'left', title: { display: true, text: '房價', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } },
+        y1: { position: 'right', title: { display: true, text: '住房率 %', color: '#64748b' }, ticks: { color: '#64748b' }, grid: { display: false } },
+        x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(30,41,59,0.5)' } }
+      }
+    }
+  });
+}
+
+function renderHotelRadar(hotel) {
+  // Normalize values relative to max in dataset
+  const all = DATA.hotels;
+  const maxFac = Math.max(...all.map(h=>h.facilityScore));
+  const maxOcc = Math.max(...all.map(h=>h.avgOccupancy));
+  const maxPI = Math.max(...all.map(h=>h.avgPriceIndex));
+  const maxRooms = Math.max(...all.map(h=>h.totalRooms));
+  const maxBR = 1;
+  
+  createChart('chart-hotel-radar', {
+    type: 'radar',
+    data: {
+      labels: ['設施評分', '住房率', '價格競爭力', '規模', '商務客比率'],
+      datasets: [{
+        label: hotel.name,
+        data: [
+          (hotel.facilityScore/maxFac*100).toFixed(0),
+          (hotel.avgOccupancy/maxOcc*100).toFixed(0),
+          (hotel.avgPriceIndex/maxPI*100).toFixed(0),
+          (hotel.totalRooms/maxRooms*100).toFixed(0),
+          (hotel.businessRatio/maxBR*100).toFixed(0)
+        ],
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.2)',
+        pointBackgroundColor: '#6366f1'
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          beginAtZero: true, max: 100,
+          ticks: { color: '#64748b', backdropColor: 'transparent' },
+          grid: { color: 'rgba(30,41,59,0.5)' },
+          pointLabels: { color: '#94a3b8', font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function renderHotelDailyTable(daily, hotel) {
+  let html = '<table class="data-table"><thead><tr><th>日期</th><th>星期</th><th>週末</th><th>假日</th><th>房價</th><th>售出</th><th>住房率</th><th>價格指數</th><th>價格係數</th></tr></thead><tbody>';
+  daily.forEach(d => {
+    const occPct = (d.occ * 100).toFixed(1);
+    html += `<tr>
+      <td>${d.date}</td><td>${d.wd}</td>
+      <td>${d.we ? '✅' : ''}</td>
+      <td>${d.hol ? '🎌' : ''} ${d.holName !== '—' ? d.holName : ''}</td>
+      <td><strong>${fmt(d.rate)}</strong></td>
+      <td>${d.sold}</td>
+      <td><span class="${parseFloat(occPct) > 65 ? 'cmp-up' : parseFloat(occPct) < 45 ? 'cmp-down' : ''}">${occPct}%</span></td>
+      <td>${d.pi}</td>
+      <td>${d.dpc}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('hotel-daily-table').innerHTML = html;
+}
+
+// ===== RENDER: TRAVEL PLANNER =====
+function renderTravel() {
+  // City comparison chart for travel
+  const cities = DATA.cities.map(c => ({
+    ...c,
+    twdRate: toTWD(c.avgRate, c.currency)
+  })).sort((a,b) => a.twdRate - b.twdRate);
+  
+  createChart('chart-travel-compare', {
+    type: 'bar',
+    data: {
+      labels: cities.map(c => `${c.city} (${c.country})`),
+      datasets: [{
+        label: '每晚均價 (TWD 換算)',
+        data: cities.map(c => c.twdRate.toFixed(0)),
+        backgroundColor: cities.map(c => {
+          if (c.twdRate < 2000) return 'rgba(16,185,129,0.6)';
+          if (c.twdRate < 4000) return 'rgba(245,158,11,0.6)';
+          return 'rgba(239,68,68,0.6)';
+        }),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      scales: {
+        x: { ticks: { color: '#64748b', callback: v => 'NT$' + Number(v).toLocaleString() }, grid: { color: 'rgba(30,41,59,0.5)' } },
+        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(30,41,59,0.5)' } }
+      }
+    }
+  });
+}
+
+function calcBudget() {
+  const dest = document.getElementById('travel-dest').value;
+  const days = parseInt(document.getElementById('travel-days').value) || 5;
+  const level = document.getElementById('travel-budget').value;
+  
+  const city = DATA.cities.find(c => c.city === dest);
+  const cityHotels = DATA.hotels.filter(h => h.city === dest);
+  if (!city || !cityHotels.length) return;
+  
+  const rates = cityHotels.map(h => h.avgRate).sort((a,b) => a-b);
+  let hotelRate;
+  if (level === 'low') hotelRate = rates[Math.floor(rates.length * 0.25)];
+  else if (level === 'high') hotelRate = rates[Math.floor(rates.length * 0.85)];
+  else hotelRate = rates[Math.floor(rates.length * 0.5)];
+  
+  const cur = city.currency;
+  const mealRate = { 'TWD': 800, 'JPY': 4000, 'THB': 600, 'SGD': 50, 'KRW': 25000, 'HKD': 200, 'MYR': 60, 'VND': 200000, 'CNY': 150, 'PHP': 800, 'IDR': 150000 };
+  const transRate = { 'TWD': 500, 'JPY': 2500, 'THB': 300, 'SGD': 30, 'KRW': 15000, 'HKD': 100, 'MYR': 30, 'VND': 100000, 'CNY': 80, 'PHP': 500, 'IDR': 100000 };
+  
+  const meals = (mealRate[cur] || 500) * days * (level === 'high' ? 1.8 : level === 'low' ? 0.6 : 1);
+  const trans = (transRate[cur] || 300) * days * (level === 'high' ? 1.5 : level === 'low' ? 0.7 : 1);
+  const hotel = hotelRate * days;
+  const total = hotel + meals + trans;
+  const totalTWD = toTWD(total, cur);
+  
+  const matchHotels = cityHotels.filter(h => {
+    if (level === 'low') return h.avgRate <= rates[Math.floor(rates.length * 0.4)];
+    if (level === 'high') return h.avgRate >= rates[Math.floor(rates.length * 0.7)];
+    return h.avgRate > rates[Math.floor(rates.length * 0.3)] && h.avgRate < rates[Math.floor(rates.length * 0.7)];
+  }).slice(0, 3);
+  
+  document.getElementById('budget-result').innerHTML = `
+    <div style="background:var(--bg-secondary);border-radius:12px;padding:1.2rem;">
+      <h4 style="margin-bottom:1rem;color:var(--accent-primary);">🧮 ${dest} ${days}天旅遊預算 (${level === 'low' ? '經濟' : level === 'high' ? '豪華' : '舒適'}型)</h4>
+      <table class="data-table">
+        <tr><td>🏨 住宿 (${days}晚)</td><td style="text-align:right"><strong>${cur} ${fmt(hotel)}</strong></td></tr>
+        <tr><td>🍽️ 餐飲 (${days}天)</td><td style="text-align:right">${cur} ${fmt(meals)}</td></tr>
+        <tr><td>🚗 交通 (${days}天)</td><td style="text-align:right">${cur} ${fmt(trans)}</td></tr>
+        <tr style="border-top:2px solid var(--accent-primary);">
+          <td><strong>💰 總計</strong></td>
+          <td style="text-align:right"><strong style="font-size:1.2rem;color:var(--accent-primary);">${cur} ${fmt(total)}</strong><br><small style="color:var(--text-secondary);">≈ TWD ${fmt(totalTWD)}</small></td>
+        </tr>
+      </table>
+      <h4 style="margin:1rem 0 0.5rem;color:var(--accent-secondary);">🏨 推薦飯店</h4>
+      ${matchHotels.map(h => `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+          <div>
+            <strong>${h.name}</strong><br>
+            <small style="color:var(--text-secondary);">住房率 ${pct(h.avgOccupancy)} | 設施 ${h.facilityScore}/10</small>
+          </div>
+          <div style="text-align:right;">
+            <strong>${h.currency} ${fmt(h.avgRate)}/晚</strong><br>
+            <span class="badge ${h.position === '商務' ? 'badge-business' : h.position === '休閒' ? 'badge-leisure' : 'badge-mixed'}">${h.position}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  // Generate itinerary
+  generateItinerary(dest, days, level, city);
+}
+
+function generateItinerary(dest, days, level, city) {
+  const attractions = {
+    '台北': ['台北101', '故宮博物院', '士林夜市', '中正紀念堂', '大安森林公園', '饒河夜市', '淡水老街', '北投溫泉', '西門町', '象山步道'],
+    '東京': ['淺草寺', '東京鐵塔', '明治神宮', '新宿御苑', '築地市場', '秋葉原', '涉谷交叉口', '上野公園', '東京迪士尼', '台場'],
+    '大阪': ['大阪城', '道頓堀', '環球影城', '通天閣', '心齋橋', '黑門市場', '天王寺', '難波', '梅田藍天大廈', '住吉大社'],
+    '京都': ['金閣寺', '清水寺', '伏見稻荷大社', '嵐山竹林', '祇園', '二條城', '銀閣寺', '哲學之道', '錦市場', '三十三間堂'],
+    '曼谷': ['大皇宮', '玉佛寺', '恰圖恰市集', '考山路', '暹羅區', '河濱夜市', '黎明寺', '丹嫩莎朵水上市場', '中國城', 'MBK購物中心'],
+    '首爾': ['景福宮', '明洞', '北村韓屋', 'N首爾塔', '弘大', '東大門', '仁寺洞', '三清洞', '汝矣島', '梨泰院'],
+    '新加坡': ['魚尾獅公園', '濱海灣花園', '聖淘沙', '牛車水', '小印度', '烏節路', '克拉碼頭', '夜間動物園', '環球影城', '金沙天空公園'],
+    '香港': ['維多利亞港', '太平山頂', '尖沙咀', '旺角', '天壇大佛', '海洋公園', '星光大道', '中環半山扶梯', '廟街夜市', '赤柱'],
+  };
+  
+  const spots = attractions[dest] || ['景點A', '景點B', '景點C', '景點D', '景點E', '景點F', '景點G', '景點H'];
+  
+  let html = '<div style="padding:0.5rem;">';
+  for (let i = 0; i < Math.min(days, 7); i++) {
+    const s1 = spots[i * 2 % spots.length];
+    const s2 = spots[(i * 2 + 1) % spots.length];
+    html += `
+      <div style="display:flex;gap:12px;margin-bottom:12px;padding:12px;background:var(--bg-secondary);border-radius:10px;">
+        <div style="min-width:50px;text-align:center;">
+          <div style="font-size:1.5rem;">📅</div>
+          <div style="font-weight:700;color:var(--accent-primary);">Day ${i+1}</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;margin-bottom:4px;">🌅 上午：${s1}</div>
+          <div style="font-weight:600;margin-bottom:4px;">🌇 下午：${s2}</div>
+          <div style="color:var(--text-secondary);font-size:0.8rem;">🍽️ 推薦品嚐當地特色美食 | 🚇 建議搭乘地鐵前往</div>
+        </div>
+      </div>
+    `;
+  }
+  if (days > 7) html += `<p style="color:var(--text-secondary);text-align:center;">... 更多行程可依實際需求調整</p>`;
+  html += '</div>';
+  document.getElementById('itinerary-result').innerHTML = html;
+}
+
+function recommendDest() {
+  const budget = parseFloat(document.getElementById('rec-budget').value) || 3000;
+  const cur = document.getElementById('rec-currency').value;
+  const budgetTWD = toTWD(budget, cur);
+  
+  const recommendations = DATA.cities.map(c => {
+    const cityTWD = toTWD(c.avgRate, c.currency);
+    const affordability = budgetTWD / cityTWD;
+    const score = affordability * 50 + c.avgOccupancy * 0.3 + (c.hotelCount * 2);
+    return { ...c, twdRate: cityTWD, affordability, score };
+  }).filter(c => c.twdRate <= budgetTWD * 1.2)
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 5);
+  
+  let html = '<div>';
+  if (recommendations.length === 0) {
+    html += '<p style="color:var(--accent-warning);">預算較低，建議提高預算以獲得更多選擇。</p>';
+  }
+  recommendations.forEach((r, i) => {
+    const pctBudget = (r.twdRate / budgetTWD * 100).toFixed(0);
+    html += `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;margin-bottom:8px;background:var(--bg-secondary);border-radius:10px;border-left:3px solid ${i===0?'var(--accent-success)':i===1?'var(--accent-primary)':'var(--accent-secondary)'};">
+        <div>
+          <div style="font-weight:700;">${COUNTRY_EMOJI[r.country]} ${r.city}</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);">
+            ${r.hotelCount} 家飯店 | 住房率 ${pct(r.avgOccupancy)} | ${r.country}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:600;">≈TWD ${fmt(r.twdRate)}/晚</div>
+          <div style="font-size:0.75rem;color:${parseInt(pctBudget) > 100 ? 'var(--accent-danger)' : 'var(--accent-success)'};">
+            佔預算 ${pctBudget}%
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  document.getElementById('recommend-result').innerHTML = html;
+}
+
+// ===== AI CHATBOT =====
+function toggleChat() {
+  document.getElementById('ai-chat').classList.toggle('open');
+}
+
+function sendAIMsg() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  askAI(msg);
+}
+
+function askAI(question) {
+  const msgArea = document.getElementById('ai-messages');
+  msgArea.innerHTML += `<div class="ai-msg user">${question}</div>`;
+  
+  // Generate AI response based on data analysis
+  const response = generateAIResponse(question);
+  
+  setTimeout(() => {
+    msgArea.innerHTML += `<div class="ai-msg bot">${response}</div>`;
+    msgArea.scrollTop = msgArea.scrollHeight;
+  }, 500);
+}
+
+function generateAIResponse(q) {
+  const hotels = DATA.hotels;
+  const cities = DATA.cities;
+  const q_lower = q.toLowerCase();
+  
+  // Pattern matching for different questions
+  if (q.includes('便宜') || q.includes('最低') || q.includes('經濟')) {
+    const sorted = cities.map(c => ({...c, twdRate: toTWD(c.avgRate, c.currency)})).sort((a,b) => a.twdRate - b.twdRate);
+    const top3 = sorted.slice(0, 3);
+    return `💰 最便宜的住宿城市：<br><br>` +
+      top3.map((c,i) => `${i+1}. <strong>${COUNTRY_EMOJI[c.country]} ${c.city}</strong>：均價 ${c.currency} ${fmt(c.avgRate)}（≈TWD ${fmt(c.twdRate)}）`).join('<br>') +
+      `<br><br>💡 建議：${top3[0].city}是目前數據中性價比最高的選擇！`;
+  }
+  
+  if (q.includes('住房率') || q.includes('熱門') || q.includes('最高')) {
+    const sorted = [...hotels].sort((a,b) => b.avgOccupancy - a.avgOccupancy).slice(0, 5);
+    return `🏨 住房率最高的飯店：<br><br>` +
+      sorted.map((h,i) => `${i+1}. <strong>${h.name}</strong>（${h.city}）：${pct(h.avgOccupancy)}`).join('<br>') +
+      `<br><br>📊 高住房率通常代表高需求，建議提早預訂！`;
+  }
+  
+  if (q.includes('假日') || q.includes('漲') || q.includes('溢價')) {
+    const impacts = hotels.map(h => ({
+      name: h.name, diff: ((h.avgHolidayRate - h.avgNormalRate) / h.avgNormalRate * 100)
+    }));
+    const avgImpact = avg(impacts.map(i=>i.diff));
+    const max = impacts.sort((a,b)=>b.diff-a.diff)[0];
+    return `📈 假日房價分析：<br><br>` +
+      `• 平均假日溢價：<strong>+${avgImpact.toFixed(1)}%</strong><br>` +
+      `• 溢價最高飯店：<strong>${max.name}</strong>（+${max.diff.toFixed(1)}%）<br><br>` +
+      `💡 建議：避開國定假日可節省約 ${avgImpact.toFixed(0)}% 的住宿費用。平日出遊是最經濟的選擇！`;
+  }
+  
+  if (q.includes('CP') || q.includes('性價比') || q.includes('推薦')) {
+    const scored = hotels.map(h => ({
+      ...h,
+      cpScore: (h.avgOccupancy * 0.4 + h.facilityScore * 5 + (120 - h.avgPriceIndex) * 0.3)
+    })).sort((a,b) => b.cpScore - a.cpScore).slice(0, 5);
+    return `⭐ CP值最高的飯店推薦：<br><br>` +
+      scored.map((h,i) => `${i+1}. <strong>${h.name}</strong>（${h.city}）<br>&nbsp;&nbsp;&nbsp;住房率${pct(h.avgOccupancy)} | 設施${h.facilityScore}/10 | 價格指數${h.avgPriceIndex}`).join('<br>') +
+      `<br><br>🎯 這些飯店在設施品質、住房率和價格之間取得了最佳平衡！`;
+  }
+  
+  if (q.includes('週末') || q.includes('平日')) {
+    const avgWE = avg(hotels.map(h=>h.avgWeekendRate));
+    const avgWD = avg(hotels.map(h=>h.avgWeekdayRate));
+    const diff = ((avgWE - avgWD) / avgWD * 100);
+    return `📅 平日 vs 週末分析：<br><br>` +
+      `• 平日均價指數：${fmt(avgWD)}<br>` +
+      `• 週末均價指數：${fmt(avgWE)}<br>` +
+      `• 差異：<strong>${diff > 0 ? '+' : ''}${diff.toFixed(1)}%</strong><br><br>` +
+      `💡 ${diff > 0 ? '週末房價較高，建議盡量安排平日入住以節省開支。' : '價差不大，可依個人行程彈性安排。'}`;
+  }
+
+  if (q.includes('國家') || q.includes('哪國')) {
+    return `🌏 11個國家/地區數據概覽：<br><br>` +
+      DATA.countries.sort((a,b)=>b.avgOccupancy-a.avgOccupancy).map(c =>
+        `${COUNTRY_EMOJI[c.country]} <strong>${c.country}</strong>：${c.hotelCount}家飯店 | 住房率 ${pct(c.avgOccupancy)}`
+      ).join('<br>') +
+      `<br><br>📊 資料涵蓋 ${DATA.meta.cities} 個城市的 ${DATA.meta.totalHotels} 家飯店。`;
+  }
+  
+  // Default response
+  return `🤖 感謝您的提問！<br><br>我可以幫您分析：<br>` +
+    `• 💰 各城市房價比較<br>` +
+    `• 📈 假日/週末溢價分析<br>` +
+    `• ⭐ CP值最高的飯店<br>` +
+    `• 🏨 住房率排名<br>` +
+    `• 🌏 各國住宿概況<br><br>` +
+    `請試著問我更具體的問題，例如「哪個城市住宿最便宜？」或「推薦CP值高的飯店」。`;
+}
+
+// ===== INIT ON LOAD =====
+init();
+</script>
+</body>
+</html>

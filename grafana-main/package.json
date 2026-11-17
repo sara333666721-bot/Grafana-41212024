@@ -1,0 +1,16 @@
+{
+  "name": "grafana-41212024",
+  "version": "1.0.0",
+  "description": "亞洲旅館智慧分析平台 - AI Smart Travel Analytics",
+  "main": "src/worker.js",
+  "scripts": {
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "publish": "npx wrangler deploy"
+  },
+  "keywords": ["hotel", "analytics", "travel", "asia"],
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
