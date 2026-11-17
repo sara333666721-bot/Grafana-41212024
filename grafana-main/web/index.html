@@ -2200,11 +2200,12 @@ async function loadHotelDetail() {
   // Fetch daily records for this city if not cached
   let dailyRecords = [];
   try {
-    if (!CITY_DAILY_MAP[hotel.city]) {
-      const res = await fetch(`/api/${encodeURIComponent(hotel.city)}.json`);
-      CITY_DAILY_MAP[hotel.city] = await res.json();
+    const cCode = hotel.cityCode || (APP_DATA.cityCodeMap && APP_DATA.cityCodeMap[hotel.city]) || 'city_0';
+    if (!CITY_DAILY_MAP[cCode]) {
+      const res = await fetch(`/api/${cCode}.json`);
+      CITY_DAILY_MAP[cCode] = await res.json();
     }
-    dailyRecords = CITY_DAILY_MAP[hotel.city][hotel.id] || [];
+    dailyRecords = CITY_DAILY_MAP[cCode][hotel.id] || [];
   } catch (err) {
     console.warn('Unable to load city daily file for', hotel.city);
   }
