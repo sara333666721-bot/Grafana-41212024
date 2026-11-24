@@ -745,6 +745,34 @@ table.custom-table tr:hover td {
   z-index: 10;
   position: relative;
 }
+
+/* Auth Modal & Role Switcher */
+.auth-role-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.auth-role-tab.active {
+  background: var(--gradient-brand);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 </style>
 </head>
 <body>
@@ -781,6 +809,23 @@ table.custom-table tr:hover td {
     <button class="voice-assistant-btn" id="voice-brief-btn">
       <span>🔊 語音簡報</span>
     </button>
+
+    <div id="user-auth-section" style="display:flex; align-items:center;">
+      <button class="btn-action" id="open-login-btn" onclick="openLoginModal()" style="padding:7px 15px; font-size:12px; display:flex; align-items:center; gap:6px;">
+        <span>👤 登入 / 註冊</span>
+      </button>
+
+      <div id="user-profile-chip" style="display:none; align-items:center; gap:8px;">
+        <div style="background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); padding:4px 12px; border-radius:20px; font-size:12px; display:flex; align-items:center; gap:6px;">
+          <span id="user-avatar-icon">🏢</span>
+          <span id="user-display-name" style="color:#fff; font-weight:700;">林經理 (台北晶華)</span>
+          <span class="badge-tag badge-purple" id="user-role-badge" style="font-size:10px; padding:1px 6px;">飯店收益端</span>
+        </div>
+        <button class="btn-action btn-secondary" onclick="handleLogout()" style="padding:4px 10px; font-size:11px;" title="登出系統">
+          登出
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -1666,6 +1711,7 @@ async function loadCoreData() {
     initHotelDetailView();
     initTravelPlannerView();
     initBookingCenterView();
+    checkPersistedAuth();
 
   } catch (err) {
     console.error('Failed to load core dataset:', err);
@@ -2975,6 +3021,269 @@ function speakRadarPlan() {
   }
 }
 
+
+
+// ================= AUTHENTICATION LOGIC =================
+let currentAuthRole = 'traveler';
+
+function openLoginModal() {
+  const modal = document.getElementById('auth-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById('auth-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function switchAuthRole(role) {
+  currentAuthRole = role;
+  const tabTraveler = document.getElementById('auth-tab-traveler');
+  const tabHotel = document.getElementById('auth-tab-hotel');
+  const hotelGroup = document.getElementById('auth-hotel-code-group');
+  const labelAccount = document.getElementById('auth-label-account');
+  const emailInput = document.getElementById('auth-input-email');
+
+  if (role === 'hotel') {
+    tabHotel.classList.add('active');
+    tabTraveler.classList.remove('active');
+    hotelGroup.style.display = 'block';
+    labelAccount.textContent = '企業/館別管理帳號';
+    emailInput.placeholder = 'manager@regent-taipei.com';
+  } else {
+    tabTraveler.classList.add('active');
+    tabHotel.classList.remove('active');
+    hotelGroup.style.display = 'none';
+    labelAccount.textContent = '電子郵件 / 會員帳號';
+    emailInput.placeholder = 'name@example.com';
+  }
+}
+
+function togglePasswordVisibility() {
+  const pwdInput = document.getElementById('auth-input-password');
+  if (pwdInput) {
+    pwdInput.type = (pwdInput.type === 'password') ? 'text' : 'password';
+  }
+}
+
+function quickFillAccount(type) {
+  const emailInput = document.getElementById('auth-input-email');
+  const pwdInput = document.getElementById('auth-input-password');
+  const hotelIdInput = document.getElementById('auth-input-hotelid');
+
+  if (type === 'manager') {
+    switchAuthRole('hotel');
+    emailInput.value = 'manager.lin@regent-taipei.com';
+    pwdInput.value = 'admin888';
+    hotelIdInput.value = 'ASIA-142';
+  } else {
+    switchAuthRole('traveler');
+    emailInput.value = 'amy.traveler@smart-tour.com';
+    pwdInput.value = 'amy2026';
+  }
+}
+
+function handleLoginSubmit(event) {
+  event.preventDefault();
+  const email = document.getElementById('auth-input-email').value;
+  const hotelId = document.getElementById('auth-input-hotelid').value;
+
+  let displayName = '尊榮會員 · Amy';
+  let roleLabel = 'VIP旅客';
+  let icon = '✈️';
+
+  if (currentAuthRole === 'hotel' || email.includes('manager') || email.includes('regent')) {
+    displayName = '林經理 · 台北晶華酒店';
+    roleLabel = '飯店收益經理';
+    icon = '🏢';
+  }
+
+  const userProfile = {
+    email,
+    displayName,
+    role: currentAuthRole,
+    roleLabel,
+    icon,
+    hotelId: hotelId || 'ASIA-142',
+    loginTime: new Date().toISOString()
+  };
+
+  localStorage.setItem('asia_hotel_user', JSON.stringify(userProfile));
+  applyUserProfile(userProfile);
+  closeLoginModal();
+
+  alert(`🎉 歡迎回來，${displayName}！已成功登入並為您載入${roleLabel}專屬決策權限。`);
+
+  if (typeof speakText === 'function') {
+    speakText(`歡迎回來，${displayName}！已為您解鎖系統專屬權限。`);
+  }
+}
+
+function simulateSocialLogin(provider) {
+  const userProfile = {
+    email: `social_${provider.toLowerCase()}@smart-travel.com`,
+    displayName: `${provider} 快速驗證會員`,
+    role: 'traveler',
+    roleLabel: '社群會員',
+    icon: '🌐',
+    loginTime: new Date().toISOString()
+  };
+
+  localStorage.setItem('asia_hotel_user', JSON.stringify(userProfile));
+  applyUserProfile(userProfile);
+  closeLoginModal();
+
+  alert(`🎉 透過 ${provider} 登入成功！已為您自動同步會員偏好行程。`);
+}
+
+function applyUserProfile(profile) {
+  const openBtn = document.getElementById('open-login-btn');
+  const profileChip = document.getElementById('user-profile-chip');
+  const avatarIcon = document.getElementById('user-avatar-icon');
+  const nameEl = document.getElementById('user-display-name');
+  const roleBadge = document.getElementById('user-role-badge');
+
+  if (profile) {
+    if (openBtn) openBtn.style.display = 'none';
+    if (profileChip) profileChip.style.display = 'flex';
+    if (avatarIcon) avatarIcon.textContent = profile.icon || '👤';
+    if (nameEl) nameEl.textContent = profile.displayName || profile.email;
+    if (roleBadge) {
+      roleBadge.textContent = profile.roleLabel || '會員';
+      roleBadge.className = (profile.role === 'hotel') ? 'badge-tag badge-purple' : 'badge-tag badge-green';
+    }
+  } else {
+    if (openBtn) openBtn.style.display = 'flex';
+    if (profileChip) profileChip.style.display = 'none';
+  }
+}
+
+function handleLogout() {
+  if (confirm('確定要登出系統嗎？')) {
+    localStorage.removeItem('asia_hotel_user');
+    applyUserProfile(null);
+    alert('您已安全登出。');
+  }
+}
+
+function checkPersistedAuth() {
+  try {
+    const saved = localStorage.getItem('asia_hotel_user');
+    if (saved) {
+      const profile = JSON.parse(saved);
+      applyUserProfile(profile);
+    }
+  } catch (e) {
+    console.warn('Failed to parse saved auth profile', e);
+  }
+}
+
 </script>
+
+<!-- Login / Register Modal Dialog -->
+<div id="auth-modal" style="display:none; position:fixed; inset:0; background:rgba(10,14,26,0.85); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:var(--bg-card); border:1px solid var(--border-light); width:100%; max-width:440px; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,0.8); overflow:hidden; position:relative; animation:modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+    <!-- Close Button -->
+    <button onclick="closeLoginModal()" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text-muted); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; transition:all 0.2s;">
+      ✕
+    </button>
+
+    <!-- Modal Header -->
+    <div style="padding:28px 28px 16px; text-align:center;">
+      <div style="width:52px; height:52px; margin:0 auto 12px; border-radius:14px; background:var(--gradient-brand); display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 8px 20px rgba(99,102,241,0.35);">
+        🏨
+      </div>
+      <h3 style="font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.3px;">登入亞洲旅館智慧分析平台</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">解鎖飯店收益決策分析與 AI 智慧旅遊客製化行程</p>
+    </div>
+
+    <!-- Role Switcher Tabs -->
+    <div style="padding:0 28px; margin-bottom:16px;">
+      <div style="background:var(--bg-input); padding:4px; border-radius:12px; display:grid; grid-template-columns:1fr 1fr; gap:4px; border:1px solid var(--border);">
+        <button id="auth-tab-traveler" class="auth-role-tab active" onclick="switchAuthRole('traveler')">
+          ✈️ 旅客會員端
+        </button>
+        <button id="auth-tab-hotel" class="auth-role-tab" onclick="switchAuthRole('hotel')">
+          🏢 飯店經營端
+        </button>
+      </div>
+    </div>
+
+    <!-- Form Body -->
+    <form id="auth-login-form" onsubmit="handleLoginSubmit(event)" style="padding:0 28px 28px; display:flex; flex-direction:column; gap:13px;">
+      <!-- Account Field -->
+      <div>
+        <label id="auth-label-account" style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">電子郵件 / 會員帳號</label>
+        <input type="text" id="auth-input-email" required placeholder="name@example.com" class="filter-input" style="width:100%; padding:10px 14px; font-size:13px; border-radius:10px;">
+      </div>
+
+      <!-- Password Field -->
+      <div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px; font-weight:700; color:var(--text-muted);">密碼</label>
+          <a href="javascript:void(0)" onclick="alert('請使用下方「一鍵免密快速體驗」即可秒速登入！')" style="font-size:11px; color:var(--accent-cyan); text-decoration:none;">忘記密碼？</a>
+        </div>
+        <div style="position:relative;">
+          <input type="password" id="auth-input-password" required placeholder="••••••••" class="filter-input" style="width:100%; padding:10px 40px 10px 14px; font-size:13px; border-radius:10px;">
+          <button type="button" onclick="togglePasswordVisibility()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px;">
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <!-- Hotel Code field (only visible in Hotel mode) -->
+      <div id="auth-hotel-code-group" style="display:none;">
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">飯店專屬代碼 (Hotel ID)</label>
+        <input type="text" id="auth-input-hotelid" placeholder="例如: ASIA-142 (台北晶華)" class="filter-input" style="width:100%; padding:10px 14px; font-size:13px; border-radius:10px;">
+      </div>
+
+      <!-- Remember Me -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="auth-remember-me" checked style="accent-color:var(--accent-indigo); cursor:pointer;">
+        <label for="auth-remember-me" style="font-size:12px; color:var(--text-muted); cursor:pointer;">保持登入狀態 (30 天)</label>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" id="auth-submit-btn" class="btn-action" style="padding:11px; font-size:14px; justify-content:center; border-radius:10px; margin-top:4px;">
+        登入系統
+      </button>
+
+      <!-- Quick Demo Accounts (One-Click Auto Fill) -->
+      <div style="background:rgba(255,255,255,0.03); border:1px dashed var(--border-light); border-radius:10px; padding:10px 12px; margin-top:2px;">
+        <div style="font-size:11px; color:var(--accent-amber); font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px;">
+          ⚡ 一鍵快速體驗登入 (免手打)：
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn-action btn-secondary" onclick="quickFillAccount('manager')" style="padding:4px 8px; font-size:11px;">
+            🏢 飯店收益經理 (台北晶華)
+          </button>
+          <button type="button" class="btn-action btn-secondary" onclick="quickFillAccount('traveler')" style="padding:4px 8px; font-size:11px;">
+            ✈️ VIP 尊榮旅客 (Amy)
+          </button>
+        </div>
+      </div>
+
+      <!-- Social Logins -->
+      <div style="position:relative; text-align:center; margin:6px 0;">
+        <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:var(--border);"></div>
+        <span style="position:relative; background:var(--bg-card); padding:0 10px; font-size:11px; color:var(--text-dim);">或透過第三方登入</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button type="button" class="btn-action btn-secondary" onclick="simulateSocialLogin('Google')" style="padding:7px; font-size:12px; justify-content:center;">
+          🌐 Google
+        </button>
+        <button type="button" class="btn-action btn-secondary" onclick="simulateSocialLogin('LINE')" style="padding:7px; font-size:12px; justify-content:center;">
+          💬 LINE
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>
