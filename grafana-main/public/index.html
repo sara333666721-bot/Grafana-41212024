@@ -5,7 +5,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>亞洲旅館智慧分析與 AI 智慧旅遊規劃平台 | Asia Hotel Analytics & AI Travel</title>
 <!-- Chart.js and Plugins -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js">
+// ================= RADAR STRATEGY SIMULATOR =================
+let radarStrategyChart = null;
+let isStrategyExecuted = false;
+
+function initRadarStrategySimulator() {
+  const ctx = document.getElementById('chart-radar-strategy-canvas');
+  if (!ctx) return;
+
+  if (CHART_REGISTRY['chart-radar-strategy-canvas']) {
+    CHART_REGISTRY['chart-radar-strategy-canvas'].destroy();
+  }
+
+  radarStrategyChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['設施水準', '住房率實力', '定價競爭力', '客房規模', '客源適配度'],
+      datasets: [
+        {
+          label: '改善前 (診斷值)',
+          data: [94, 44, 38, 70, 42],
+          backgroundColor: 'rgba(244, 63, 94, 0.35)',
+          borderColor: '#f43f5e',
+          pointBackgroundColor: '#f43f5e',
+          pointRadius: 4,
+          borderWidth: 2
+        },
+        {
+          label: '同業標竿 (Benchmark)',
+          data: [80, 68, 72, 65, 70],
+          backgroundColor: 'transparent',
+          borderColor: 'rgba(148, 163, 184, 0.7)',
+          borderDash: [4, 4],
+          pointBackgroundColor: '#94a3b8',
+          pointRadius: 3,
+          borderWidth: 1.5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } }
+      },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { backdropColor: 'transparent', color: '#64748b', stepSize: 20 },
+          grid: { color: 'rgba(34, 48, 77, 0.6)' },
+          pointLabels: { color: '#cbd5e1', font: { size: 11, weight: 'bold' } }
+        }
+      }
+    }
+  });
+
+  CHART_REGISTRY['chart-radar-strategy-canvas'] = radarStrategyChart;
+}
+
+function executeRadarStrategy() {
+  if (!radarStrategyChart) return;
+  isStrategyExecuted = true;
+
+  radarStrategyChart.data.datasets = [
+    {
+      label: '改善前 (診斷值 - 嚴重失衡)',
+      data: [94, 44, 38, 70, 42],
+      backgroundColor: 'rgba(244, 63, 94, 0.15)',
+      borderColor: 'rgba(244, 63, 94, 0.6)',
+      borderDash: [3, 3],
+      pointBackgroundColor: '#f43f5e',
+      pointRadius: 3,
+      borderWidth: 1.5
+    },
+    {
+      label: '同業標竿 (Benchmark)',
+      data: [80, 68, 72, 65, 70],
+      backgroundColor: 'transparent',
+      borderColor: 'rgba(148, 163, 184, 0.5)',
+      borderDash: [4, 4],
+      pointBackgroundColor: '#94a3b8',
+      pointRadius: 3,
+      borderWidth: 1
+    },
+    {
+      label: '⚡ 改善後 (執行規劃方案)',
+      data: [94, 68, 72, 70, 68],
+      backgroundColor: 'rgba(16, 185, 129, 0.4)',
+      borderColor: '#10b981',
+      pointBackgroundColor: '#10b981',
+      pointRadius: 5,
+      borderWidth: 2.5
+    }
+  ];
+  radarStrategyChart.update();
+
+  const badge = document.getElementById('strategy-status-badge');
+  badge.textContent = '🟢 執行成功：已消除致命短板，擴展為正多邊形均衡收益架構！';
+  badge.style.background = 'rgba(16, 185, 129, 0.2)';
+  badge.style.color = '#34d399';
+
+  document.getElementById('badge-occ-status').innerHTML = '<span class="badge-tag badge-green">✅ 已修復 (+24分)</span>';
+  document.getElementById('badge-price-status').innerHTML = '<span class="badge-tag badge-green">✅ 已修復 (+34分)</span>';
+  document.getElementById('badge-target-status').innerHTML = '<span class="badge-tag badge-green">✅ 已修復 (+26分)</span>';
+
+  document.getElementById('kpi-revpar').textContent = 'NT$ 2,618';
+  document.getElementById('kpi-revpar').style.color = '#34d399';
+  document.getElementById('kpi-sold').textContent = '143 間 / 日';
+  document.getElementById('kpi-revenue').textContent = 'NT$ 17.0 M';
+  document.getElementById('kpi-revenue').style.color = '#34d399';
+
+  document.getElementById('step-1-text').innerHTML = '✅ <strong style="color:#34d399;">[已啟動] 短期</strong>：平日動態定價調降 15%（ADR NT$3,850），消除價格抗拒，售房數立即暴增 51 間！';
+  document.getElementById('step-2-text').innerHTML = '✅ <strong style="color:#34d399;">[已對接] 中期</strong>：鎖定周邊 5km 科技外商簽約，週中出差房晚底盤穩固，商務佔比回升至 55%。';
+  document.getElementById('step-3-text').innerHTML = '✅ <strong style="color:#34d399;">[已配置] 長期</strong>：高空酒廊與水療獨立變現，帶動非客房收益成長，RevPAR 攀升至 NT$2,618 (+32.8%)！';
+
+  speakText('優化策略執行完畢！透過平日動態降價15%與商務企業協議通路拓展，成功修復定價與客群內凹短板，雷達圖恢復多維均衡，預估每房可用收益增長32.8%，全月營收淨增四百二十萬元！');
+}
+
+function resetRadarCase() {
+  isStrategyExecuted = false;
+  initRadarStrategySimulator();
+
+  const badge = document.getElementById('strategy-status-badge');
+  badge.textContent = '🔴 診斷狀態：長矛型嚴重失衡';
+  badge.style.background = 'rgba(244,63,94,0.2)';
+  badge.style.color = '#fb7185';
+
+  document.getElementById('badge-occ-status').innerHTML = '<span class="badge-tag badge-rose">嚴重內凹</span>';
+  document.getElementById('badge-price-status').innerHTML = '<span class="badge-tag badge-rose">嚴重內凹</span>';
+  document.getElementById('badge-target-status').innerHTML = '<span class="badge-tag badge-rose">客群錯位</span>';
+
+  document.getElementById('kpi-revpar').textContent = 'NT$ 1,971';
+  document.getElementById('kpi-revpar').style.color = '#fff';
+  document.getElementById('kpi-sold').textContent = '92 間 / 日';
+  document.getElementById('kpi-revenue').textContent = 'NT$ 12.8 M';
+  document.getElementById('kpi-revenue').style.color = 'var(--accent-emerald)';
+
+  document.getElementById('step-1-text').innerHTML = '📌 <strong>短期 (1-30天)</strong>：平日價格微調 -15%，週末溢價維持並捆綁設施消費禮遇。';
+  document.getElementById('step-2-text').innerHTML = '📌 <strong>中期 (1-3個月)</strong>：開發商務企業長約客戶，週中常態出差客源佔比拉抬至 55%。';
+  document.getElementById('step-3-text').innerHTML = '📌 <strong>長期 (半年以上)</strong>：將 94 分設施對外獨立會員制變現，平抑淡季衝擊。';
+}
+
+function speakRadarPlan() {
+  speakText('雷達圖營運規劃方案簡報：本案飯店設施高達94分，但定價競爭力僅38分、住房率僅44分，形成典型的長矛型失衡。建議執行短期調價負15%、中期拓展商務合約客，將雷達圖拉伸為均衡正多邊形，預期創造32.8%的收益成長。');
+}
+
+</script>
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1231,6 +1378,117 @@ table.custom-table tr:hover td {
         </div>
       </div>
 
+      <!-- Radar Diagnostic & Strategy Execution Panel -->
+      <div class="panel-card col-12" id="radar-strategy-panel" style="border:1px solid var(--accent-indigo); box-shadow: 0 0 25px rgba(99,102,241,0.2);">
+        <div class="panel-header" style="background: linear-gradient(90deg, rgba(99,102,241,0.25) 0%, rgba(6,182,212,0.15) 100%);">
+          <div class="panel-header-left">
+            <h3 style="color:#fff;">🎯 雷達圖多維營運失衡診斷與規劃執行模擬器 (Radar Strategy Execution Simulator)</h3>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-action btn-secondary" onclick="resetRadarCase()">🔄 重設診斷案例</button>
+            <button class="btn-action" id="btn-execute-strategy" onclick="executeRadarStrategy()" style="background:linear-gradient(135deg, #10b981 0%, #06b6d4 100%); font-size:13px; padding:8px 18px; box-shadow: 0 4px 15px rgba(16,185,129,0.35);">⚡ 一鍵執行規劃建議 (Execute Strategy)</button>
+            <button class="btn-action btn-secondary" onclick="speakRadarPlan()">🔊 語音簡報規劃策略</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Left: Radar Chart -->
+            <div style="background:var(--bg-card-alt); border-radius:12px; padding:16px; border:1px solid var(--border);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="font-size:14px; color:#fff;">📊 五維競爭力形態對比 (改善前 vs 改善後 vs 同業標竿)</h4>
+                <span class="badge-tag" id="strategy-status-badge" style="background:rgba(244,63,94,0.2); color:#fb7185;">🔴 診斷狀態：長矛型嚴重失衡</span>
+              </div>
+              <div style="height:320px;">
+                <canvas id="chart-radar-strategy-canvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Right: Details, Tables & Financial Impact -->
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div class="table-responsive">
+                <table class="custom-table" style="font-size:11px;">
+                  <thead>
+                    <tr>
+                      <th>評估維度</th>
+                      <th>改善前 (診斷值)</th>
+                      <th>改善後 (預期值)</th>
+                      <th>同業標竿</th>
+                      <th>形狀狀態</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>1. 設施硬體水準</strong></td>
+                      <td><span style="color:#34d399; font-weight:700;">94 分</span> (9.4/10)</td>
+                      <td><strong style="color:#34d399;">94 分</strong></td>
+                      <td>80 分</td>
+                      <td><span class="badge-tag badge-green">優勢突刺</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>2. 住房率實力</strong></td>
+                      <td><span style="color:#fb7185; font-weight:700;">44 分</span> (43.8%)</td>
+                      <td><strong style="color:#38bdf8;" id="val-tgt-occ">68 分 (68.0%)</strong></td>
+                      <td>68 分</td>
+                      <td id="badge-occ-status"><span class="badge-tag badge-rose">嚴重內凹</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>3. 定價競爭力</strong></td>
+                      <td><span style="color:#fb7185; font-weight:700;">38 分</span> (指數128)</td>
+                      <td><strong style="color:#38bdf8;" id="val-tgt-price">72 分 (指數108)</strong></td>
+                      <td>72 分</td>
+                      <td id="badge-price-status"><span class="badge-tag badge-rose">嚴重內凹</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>4. 客房規模容量</strong></td>
+                      <td><span style="color:#fbbf24; font-weight:700;">70 分</span> (210間)</td>
+                      <td><strong style="color:#fbbf24;">70 分</strong></td>
+                      <td>65 分</td>
+                      <td><span class="badge-tag badge-amber">中大體量</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>5. 客源適配度</strong></td>
+                      <td><span style="color:#fb7185; font-weight:700;">42 分</span> (商務28%)</td>
+                      <td><strong style="color:#38bdf8;" id="val-tgt-target">68 分 (商務55%)</strong></td>
+                      <td>70 分</td>
+                      <td id="badge-target-status"><span class="badge-tag badge-rose">客群錯位</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Financial KPI Impact Cards -->
+              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center;">
+                  <div style="font-size:11px; color:var(--text-muted);">每房可用營收 (RevPAR)</div>
+                  <div style="font-size:17px; font-weight:800; color:#fff;" id="kpi-revpar">NT$ 1,971</div>
+                  <div style="font-size:11px; color:#34d399;" id="kpi-revpar-diff">執行後: NT$ 2,618 (+32.8%)</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center;">
+                  <div style="font-size:11px; color:var(--text-muted);">日均售出客房數</div>
+                  <div style="font-size:17px; font-weight:800; color:var(--accent-cyan);" id="kpi-sold">92 間 / 日</div>
+                  <div style="font-size:11px; color:#34d399;" id="kpi-sold-diff">執行後: 143 間 (+51間)</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center;">
+                  <div style="font-size:11px; color:var(--text-muted);">全月營業額預估</div>
+                  <div style="font-size:17px; font-weight:800; color:var(--accent-emerald);" id="kpi-revenue">NT$ 12.8 M</div>
+                  <div style="font-size:11px; color:#34d399;" id="kpi-revenue-diff">執行後: +NT$ 4.2 M</div>
+                </div>
+              </div>
+
+              <!-- Actionable Checklist -->
+              <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:11px;">
+                <div style="font-weight:700; color:#a5b4fc; margin-bottom:4px;">🚀 執行落地三大里程碑進度：</div>
+                <div style="display:flex; flex-direction:column; gap:3px; color:var(--text-muted);">
+                  <div id="step-1-text">📌 <strong>短期 (1-30天)</strong>：平日價格微調 -15%，週末溢價維持並捆綁設施消費禮遇。</div>
+                  <div id="step-2-text">📌 <strong>中期 (1-3個月)</strong>：開發商務企業長約客戶，週中常態出差客源佔比拉抬至 55%。</div>
+                  <div id="step-3-text">📌 <strong>長期 (半年以上)</strong>：將 94 分設施對外獨立會員制變現，平抑淡季衝擊。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Detailed 31 Days Table -->
       <div class="panel-card col-12">
         <div class="panel-header">
@@ -2110,6 +2368,7 @@ function initHotelDetailView() {
   });
 
   filterHotelDropdown();
+  initRadarStrategySimulator();
 }
 
 function filterHotelDropdown() {
